@@ -1,61 +1,211 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тап Гра</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            background-color: #1e1e1e;
-            color: white;
+            font-family: Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
         }
-        #tap-button {
+        
+        #clickButton {
             padding: 20px 40px;
             font-size: 24px;
+            background-color: var(--tg-theme-button-color, #4CAF50);
+            color: var(--tg-theme-button-text-color, white);
             border: none;
             border-radius: 10px;
-            background-color: #2aabee;
-            color: white;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: background-color 0.3s;
         }
-        #tap-button:active {
-            transform: scale(0.95);
-        }
-        #score {
-            font-size: 32px;
+        
+        #counter {
+            font-size: 36px;
             margin: 20px 0;
+        }
+
+        #rewardImage {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.5s;
+        }
+
+        #rewardImage img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            animation: scaleIn 0.5s;
+        }
+
+        #closeButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { 
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            to { 
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1001;
         }
     </style>
 </head>
 <body>
-    <div id="score">Рахунок: 0</div>
-    <button id="tap-button">ТАП!</button>
+    <div id="counter">Натискань: <span id="clickCount">0</span></div>
+    <button id="clickButton">Натисни мене!</button>
+
+    <div id="rewardImage">
+        <button id="closeButton">✕</button>
+        <img src="data:image/jpeg;base64,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" alt="Вітаємо!">
+    </div>
+
+    <canvas id="confetti"></canvas>
 
     <script>
         let tg = window.Telegram.WebApp;
-        let score = 0;
-        const scoreElement = document.getElementById('score');
-        const tapButton = document.getElementById('tap-button');
-
+        let clicks = 0;
+        const button = document.getElementById('clickButton');
+        const countDisplay = document.getElementById('clickCount');
+        const rewardImage = document.getElementById('rewardImage');
+        const closeButton = document.getElementById('closeButton');
+        
         // Ініціалізуємо Telegram WebApp
         tg.expand();
+        
+        // Функція для конфетті
+        function createConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const pieces = [];
+            const numberOfPieces = 200;
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
 
-        tapButton.addEventListener('click', () => {
-            score++;
-            scoreElement.textContent = `Рахунок: ${score}`;
+            class Piece {
+                constructor() {
+                    this.x = canvas.width * Math.random();
+                    this.y = canvas.height * Math.random() - canvas.height;
+                    this.rotation = Math.random() * 360;
+                    this.size = Math.random() * 15 + 5;
+                    this.speed = this.size * 0.5;
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                }
+
+                update() {
+                    this.y += this.speed;
+                    this.rotation += 2;
+                    if (this.y > canvas.height) {
+                        this.y = -this.size;
+                        this.x = Math.random() * canvas.width;
+                    }
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation * Math.PI / 180);
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                    ctx.restore();
+                }
+            }
+
+            for (let i = 0; i < numberOfPieces; i++) {
+                pieces.push(new Piece());
+            }
+
+            let animationId;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(piece => {
+                    piece.update();
+                    piece.draw();
+                });
+                animationId = requestAnimationFrame(animate);
+            }
+
+            animate();
+
+            // Зупиняємо анімацію після 3 секунд
+            setTimeout(() => {
+                cancelAnimationFrame(animationId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }, 3000);
+        }
+
+        button.addEventListener('click', () => {
+            clicks++;
+            countDisplay.textContent = clicks;
             
-            // Створюємо ефект вібрації
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+            if (clicks === 100) {
+                // Показуємо картинку
+                rewardImage.style.display = 'flex';
+                // Запускаємо конфетті
+                createConfetti();
+                // Скидаємо лічильник
+                setTimeout(() => {
+                    clicks = 0;
+                    countDisplay.textContent = clicks;
+                }, 2000);
+            }
+        });
+
+        closeButton.addEventListener('click', () => {
+            rewardImage.style.display = 'none';
+        });
+
+        // Закриття по кліку поза картинкою
+        rewardImage.addEventListener('click', (e) => {
+            if (e.target === rewardImage) {
+                rewardImage.style.display = 'none';
             }
         });
     </script>
