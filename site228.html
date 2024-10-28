@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тап Гра</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: white;
+        }
+        #tap-button {
+            padding: 20px 40px;
+            font-size: 24px;
+            border: none;
+            border-radius: 10px;
+            background-color: #2aabee;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        #tap-button:active {
+            transform: scale(0.95);
+        }
+        #score {
+            font-size: 32px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Рахунок: 0</div>
+    <button id="tap-button">ТАП!</button>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        let score = 0;
+        const scoreElement = document.getElementById('score');
+        const tapButton = document.getElementById('tap-button');
+
+        // Ініціалізуємо Telegram WebApp
+        tg.expand();
+
+        tapButton.addEventListener('click', () => {
+            score++;
+            scoreElement.textContent = `Рахунок: ${score}`;
+            
+            // Створюємо ефект вібрації
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        });
+    </script>
+</body>
+</html>
